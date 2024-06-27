@@ -30,10 +30,10 @@ public class mainPage extends AppCompatActivity {
 
         // Initialize the list of diary entries
         diaryEntries = new ArrayList<>();
-        diaryEntries.add(new DiaryEntry("First Entry", "This is the content of the first entry.", "2024-06-26 08:00", null, "Sunny", 0.0, 0.0));
-        diaryEntries.add(new DiaryEntry("Second Entry", "This is the content of the second entry.", "2024-06-27 14:00", null, "Cloudy", 0.0, 0.0));
+        diaryEntries.add(new DiaryEntry("Second Entry", "This is the content of the second entry.", "2024-06-27 14:00", null, "Cloudy", 0, 0));
+        diaryEntries.add(new DiaryEntry("First Entry", "This is the content of the first entry.", "2024-06-26 08:00", null, "Sunny", 0, 0));
 
-        diaryAdapter = new DiaryAdapter(diaryEntries);
+        diaryAdapter = new DiaryAdapter(this, diaryEntries);
         recyclerView.setAdapter(diaryAdapter);
 
         Button addDiaryButton = findViewById(R.id.addDiaryButton);
@@ -55,8 +55,8 @@ public class mainPage extends AppCompatActivity {
             String dateTime = data.getStringExtra("dateTime");
             String weather = data.getStringExtra("weather");
             String imageUri = data.getStringExtra("imageUri");
-            double latitude = data.getDoubleExtra("latitude", 0.0);
-            double longitude = data.getDoubleExtra("longitude", 0.0);
+            double latitude = data.getDoubleExtra("latitude", 0);
+            double longitude = data.getDoubleExtra("longitude", 0);
 
             DiaryEntry newEntry = new DiaryEntry(title, content, dateTime, imageUri, weather, latitude, longitude);
             diaryEntries.add(0, newEntry);  // 将新条目添加到列表的开头

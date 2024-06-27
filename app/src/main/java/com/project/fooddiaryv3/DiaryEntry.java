@@ -3,16 +3,16 @@ package com.project.fooddiaryv3;
 public class DiaryEntry {
     private String title;
     private String content;
-    private String dateTime;
+    private String date;
     private String imageUri;
     private String weather;
     private double latitude;
     private double longitude;
 
-    public DiaryEntry(String title, String content, String dateTime, String imageUri, String weather, double latitude, double longitude) {
+    public DiaryEntry(String title, String content, String date, String imageUri, String weather, double latitude, double longitude) {
         this.title = title;
         this.content = content;
-        this.dateTime = dateTime;
+        this.date = date;
         this.imageUri = imageUri;
         this.weather = weather;
         this.latitude = latitude;
@@ -36,12 +36,12 @@ public class DiaryEntry {
         this.content = content;
     }
 
-    public String getDateTime() {
-        return dateTime;
+    public String getDate() {
+        return date;
     }
 
-    public void setDateTime(String dateTime) {
-        this.dateTime = dateTime;
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public String getImageUri() {

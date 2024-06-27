@@ -29,10 +29,10 @@
         android:layout_marginTop="4dp"/>
 
     <TextView
-        android:id="@+id/dateTimeTextView"
+        android:id="@+id/dateTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Date and Time"
+        android:text="Date"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
         android:textColor="@android:color/darker_gray"/>
@@ -44,14 +44,22 @@
         android:text="Weather"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
-        android:textColor="@android:color/holo_blue_dark"/> <!-- 新增天气信息显示 -->
+        android:textColor="@android:color/holo_blue_dark"/> <!-- 天气信息显示 -->
 
-    <TextView
-        android:id="@+id/gpsTextView"
+    <Button
+        android:id="@+id/openMapButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="GPS"
+        android:text="Open Map"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/noLocationTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="没有记录GPS"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
-        android:textColor="@android:color/holo_green_dark"/> <!-- 新增GPS信息显示 -->
+        android:visibility="gone"/>
 </LinearLayout>

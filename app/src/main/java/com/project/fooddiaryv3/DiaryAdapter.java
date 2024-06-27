@@ -1,9 +1,12 @@
 package com.project.fooddiaryv3;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,8 +17,10 @@ import java.util.List;
 
 public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHolder> {
     private List<DiaryEntry> diaryEntries;
+    private Context context;
 
-    public DiaryAdapter(List<DiaryEntry> diaryEntries) {
+    public DiaryAdapter(Context context, List<DiaryEntry> diaryEntries) {
+        this.context = context;
         this.diaryEntries = diaryEntries;
     }
 
@@ -31,14 +36,29 @@ public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHol
         DiaryEntry diaryEntry = diaryEntries.get(position);
         holder.titleTextView.setText(diaryEntry.getTitle());
         holder.contentTextView.setText(diaryEntry.getContent());
-        holder.dateTimeTextView.setText(diaryEntry.getDateTime());
+        holder.dateTextView.setText(diaryEntry.getDate());
         holder.weatherTextView.setText(diaryEntry.getWeather());
-        holder.gpsTextView.setText(String.format("Lat: %.2f, Lon: %.2f", diaryEntry.getLatitude(), diaryEntry.getLongitude()));
 
         if (diaryEntry.getImageUri() != null) {
             holder.diaryImageView.setImageURI(Uri.parse(diaryEntry.getImageUri()));
         } else {
-            holder.diaryImageView.setImageResource(R.drawable.placeholder); // 引用占位符图片
+            holder.diaryImageView.setImageResource(R.drawable.placeholder); // 占位符图片
+        }
+
+        if (diaryEntry.getLatitude() != 0 && diaryEntry.getLongitude() != 0) {
+            holder.openMapButton.setVisibility(View.VISIBLE);
+            holder.noLocationTextView.setVisibility(View.GONE);
+            holder.openMapButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Uri geoUri = Uri.parse("geo:" + diaryEntry.getLatitude() + "," + diaryEntry.getLongitude() + "?q=" + diaryEntry.getLatitude() + "," + diaryEntry.getLongitude());
+                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, geoUri);
+                    context.startActivity(mapIntent);
+                }
+            });
+        } else {
+            holder.openMapButton.setVisibility(View.GONE);
+            holder.noLocationTextView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -48,17 +68,19 @@ public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHol
     }
 
     public static class DiaryViewHolder extends RecyclerView.ViewHolder {
-        TextView titleTextView, contentTextView, dateTimeTextView, weatherTextView, gpsTextView;
+        TextView titleTextView, contentTextView, dateTextView, weatherTextView, noLocationTextView;
         ImageView diaryImageView;
+        Button openMapButton;
 
         public DiaryViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.titleTextView);
             contentTextView = itemView.findViewById(R.id.contentTextView);
-            dateTimeTextView = itemView.findViewById(R.id.dateTimeTextView);
+            dateTextView = itemView.findViewById(R.id.dateTextView);
             weatherTextView = itemView.findViewById(R.id.weatherTextView);
-            gpsTextView = itemView.findViewById(R.id.gpsTextView);
             diaryImageView = itemView.findViewById(R.id.diaryImageView);
+            openMapButton = itemView.findViewById(R.id.openMapButton);
+            noLocationTextView = itemView.findViewById(R.id.noLocationTextView);
         }
     }
 }

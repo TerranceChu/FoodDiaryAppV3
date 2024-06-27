@@ -1,68 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
 
-    <EditText
-        android:id="@+id/titleEditText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Title"
-        android:textSize="18sp"/>
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/contentEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Content"
-        android:textSize="16sp"
-        android:layout_marginTop="16dp"/>
+        <EditText
+            android:id="@+id/titleEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Title"
+            android:textSize="18sp" />
 
-    <EditText
-        android:id="@+id/weatherEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Weather"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"/>
+        <EditText
+            android:id="@+id/contentEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Content"
+            android:textSize="16sp"
+            android:layout_marginTop="16dp" />
 
-    <EditText
-        android:id="@+id/dateTimeEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Date and Time"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"
-        android:focusable="false"
-        android:clickable="true"/>
+        <EditText
+            android:id="@+id/weatherEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Weather"
+            android:textSize="14sp"
+            android:layout_marginTop="16dp" />
 
-    <Button
-        android:id="@+id/getLocationButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Get Location"
-        android:layout_marginTop="16dp"/>
+        <EditText
+            android:id="@+id/dateTimeEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Date and Time"
+            android:textSize="14sp"
+            android:layout_marginTop="16dp"
+            android:focusable="false"
+            android:clickable="true" />
 
-    <ImageView
-        android:id="@+id/selectedImageView"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop"
-        android:layout_marginTop="16dp"/>
+        <ImageView
+            android:id="@+id/selectedImageView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="16dp" />
 
-    <Button
-        android:id="@+id/selectImageButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Select Image"
-        android:layout_marginTop="16dp"/>
+        <FrameLayout
+            android:id="@+id/map_container"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"/>
 
-    <Button
-        android:id="@+id/saveButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Save"
-        android:layout_marginTop="16dp"/>
-</LinearLayout>
+
+        <Button
+            android:id="@+id/selectImageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Image"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/recordLocationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Record Location"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/saveButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</ScrollView>

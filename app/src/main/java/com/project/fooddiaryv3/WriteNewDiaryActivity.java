@@ -6,8 +6,6 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -24,22 +22,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
+
 import java.util.Calendar;
 
 public class WriteNewDiaryActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 2;
+    private static final int REQUEST_LOCATION_PERMISSION = 2;
 
     private EditText titleEditText, contentEditText, weatherEditText, dateTimeEditText;
     private ImageView selectedImageView;
-    private Button selectImageButton, saveButton, getLocationButton;
+    private Button selectImageButton, saveButton, recordLocationButton;
 
     private Uri selectedImageUri;
     private Calendar calendar;
-    private double latitude;
-    private double longitude;
-    private boolean locationAvailable = false;
+    private FusedLocationProviderClient fusedLocationClient;
+    private double latitude = 0.0, longitude = 0.0;  // 初始化为0.0
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +61,10 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         selectedImageView = findViewById(R.id.selectedImageView);
         selectImageButton = findViewById(R.id.selectImageButton);
         saveButton = findViewById(R.id.saveButton);
-        getLocationButton = findViewById(R.id.getLocationButton);
+        recordLocationButton = findViewById(R.id.recordLocationButton);
 
         calendar = Calendar.getInstance();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         dateTimeEditText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,13 +82,6 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
             }
         });
 
-        getLocationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getLocation();
-            }
-        });
-
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -88,11 +90,6 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 String weather = weatherEditText.getText().toString();
                 String dateTime = dateTimeEditText.getText().toString();
                 String imageUriString = selectedImageUri != null ? selectedImageUri.toString() : null;
-
-                if (!locationAvailable) {
-                    Toast.makeText(WriteNewDiaryActivity.this, "Location not available. Please try again.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("title", title);
@@ -104,6 +101,17 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 resultIntent.putExtra("longitude", longitude);
                 setResult(RESULT_OK, resultIntent);
                 finish();
+            }
+        });
+
+        recordLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ContextCompat.checkSelfPermission(WriteNewDiaryActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(WriteNewDiaryActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+                } else {
+                    openMap();
+                }
             }
         });
     }
@@ -136,42 +144,54 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
-    private void getLocation() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            LocationListener locationListener = new LocationListener() {
-                @Override
-                public void onLocationChanged(@NonNull Location location) {
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                    locationAvailable = true;
-                    Toast.makeText(WriteNewDiaryActivity.this, "Location acquired: Lat: " + latitude + ", Lon: " + longitude, Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) { }
-
-                @Override
-                public void onProviderEnabled(@NonNull String provider) { }
-
-                @Override
-                public void onProviderDisabled(@NonNull String provider) { }
-            };
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getLocation();
-            } else {
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+    private void openMap() {
+        try {
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_container);
+            if (mapFragment == null) {
+                mapFragment = SupportMapFragment.newInstance();
+                getSupportFragmentManager().beginTransaction().replace(R.id.map_container, mapFragment).addToBackStack(null).commit();
             }
+            mapFragment.getMapAsync(new OnMapReadyCallback() {
+                @Override
+                public void onMapReady(GoogleMap googleMap) {
+                    if (ActivityCompat.checkSelfPermission(WriteNewDiaryActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(WriteNewDiaryActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+                    googleMap.setMyLocationEnabled(true);
+                    fusedLocationClient.getLastLocation()
+                            .addOnSuccessListener(WriteNewDiaryActivity.this, new OnSuccessListener<Location>() {
+                                @Override
+                                public void onSuccess(Location location) {
+                                    if (location != null) {
+                                        LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15));
+                                        Marker marker = googleMap.addMarker(new MarkerOptions().position(userLocation).draggable(true));
+                                        googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                                            @Override
+                                            public void onMarkerDragStart(Marker marker) {
+                                                // Do nothing
+                                            }
+
+                                            @Override
+                                            public void onMarkerDrag(Marker marker) {
+                                                // Do nothing
+                                            }
+
+                                            @Override
+                                            public void onMarkerDragEnd(Marker marker) {
+                                                LatLng position = marker.getPosition();
+                                                latitude = position.latitude;
+                                                longitude = position.longitude;
+                                                Toast.makeText(WriteNewDiaryActivity.this, "Location recorded: " + latitude + ", " + longitude, Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                }
+            });
+        } catch (SecurityException e) {
+            e.printStackTrace();
         }
     }
 
@@ -181,6 +201,14 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             selectedImageUri = data.getData();
             selectedImageView.setImageURI(selectedImageUri);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_LOCATION_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openMap();
         }
     }
 }
