@@ -1,8 +1,13 @@
 package com.project.fooddiaryv3;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -11,22 +16,30 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.Calendar;
 
 public class WriteNewDiaryActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 2;
 
     private EditText titleEditText, contentEditText, weatherEditText, dateTimeEditText;
     private ImageView selectedImageView;
-    private Button selectImageButton, saveButton;
+    private Button selectImageButton, saveButton, getLocationButton;
 
     private Uri selectedImageUri;
     private Calendar calendar;
+    private double latitude;
+    private double longitude;
+    private boolean locationAvailable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +53,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         selectedImageView = findViewById(R.id.selectedImageView);
         selectImageButton = findViewById(R.id.selectImageButton);
         saveButton = findViewById(R.id.saveButton);
+        getLocationButton = findViewById(R.id.getLocationButton);
 
         calendar = Calendar.getInstance();
 
@@ -59,6 +73,13 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
             }
         });
 
+        getLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getLocation();
+            }
+        });
+
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,12 +89,19 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 String dateTime = dateTimeEditText.getText().toString();
                 String imageUriString = selectedImageUri != null ? selectedImageUri.toString() : null;
 
+                if (!locationAvailable) {
+                    Toast.makeText(WriteNewDiaryActivity.this, "Location not available. Please try again.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("title", title);
                 resultIntent.putExtra("content", content);
                 resultIntent.putExtra("weather", weather);
                 resultIntent.putExtra("dateTime", dateTime);
                 resultIntent.putExtra("imageUri", imageUriString);
+                resultIntent.putExtra("latitude", latitude);
+                resultIntent.putExtra("longitude", longitude);
                 setResult(RESULT_OK, resultIntent);
                 finish();
             }
@@ -106,6 +134,45 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
             }
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
         datePickerDialog.show();
+    }
+
+    private void getLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(@NonNull Location location) {
+                    latitude = location.getLatitude();
+                    longitude = location.getLongitude();
+                    locationAvailable = true;
+                    Toast.makeText(WriteNewDiaryActivity.this, "Location acquired: Lat: " + latitude + ", Lon: " + longitude, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) { }
+
+                @Override
+                public void onProviderEnabled(@NonNull String provider) { }
+
+                @Override
+                public void onProviderDisabled(@NonNull String provider) { }
+            };
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLocation();
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override

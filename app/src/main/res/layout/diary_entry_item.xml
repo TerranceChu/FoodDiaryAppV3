@@ -29,10 +29,10 @@
         android:layout_marginTop="4dp"/>
 
     <TextView
-        android:id="@+id/dateTextView"
+        android:id="@+id/dateTimeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Date"
+        android:text="Date and Time"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
         android:textColor="@android:color/darker_gray"/>
@@ -45,4 +45,13 @@
         android:textSize="14sp"
         android:layout_marginTop="4dp"
         android:textColor="@android:color/holo_blue_dark"/> <!-- 新增天气信息显示 -->
+
+    <TextView
+        android:id="@+id/gpsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="GPS"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:textColor="@android:color/holo_green_dark"/> <!-- 新增GPS信息显示 -->
 </LinearLayout>

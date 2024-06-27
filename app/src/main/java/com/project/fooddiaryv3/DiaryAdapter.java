@@ -31,13 +31,14 @@ public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHol
         DiaryEntry diaryEntry = diaryEntries.get(position);
         holder.titleTextView.setText(diaryEntry.getTitle());
         holder.contentTextView.setText(diaryEntry.getContent());
-        holder.dateTextView.setText(diaryEntry.getDate());
-        holder.weatherTextView.setText(diaryEntry.getWeather());  // 设置天气信息
+        holder.dateTimeTextView.setText(diaryEntry.getDateTime());
+        holder.weatherTextView.setText(diaryEntry.getWeather());
+        holder.gpsTextView.setText(String.format("Lat: %.2f, Lon: %.2f", diaryEntry.getLatitude(), diaryEntry.getLongitude()));
 
         if (diaryEntry.getImageUri() != null) {
             holder.diaryImageView.setImageURI(Uri.parse(diaryEntry.getImageUri()));
         } else {
-            holder.diaryImageView.setImageResource(R.drawable.placeholder);  // 引用占位符图片
+            holder.diaryImageView.setImageResource(R.drawable.placeholder); // 引用占位符图片
         }
     }
 
@@ -47,15 +48,16 @@ public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHol
     }
 
     public static class DiaryViewHolder extends RecyclerView.ViewHolder {
-        TextView titleTextView, contentTextView, dateTextView, weatherTextView;
+        TextView titleTextView, contentTextView, dateTimeTextView, weatherTextView, gpsTextView;
         ImageView diaryImageView;
 
         public DiaryViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.titleTextView);
             contentTextView = itemView.findViewById(R.id.contentTextView);
-            dateTextView = itemView.findViewById(R.id.dateTextView);
-            weatherTextView = itemView.findViewById(R.id.weatherTextView);  // 初始化天气信息
+            dateTimeTextView = itemView.findViewById(R.id.dateTimeTextView);
+            weatherTextView = itemView.findViewById(R.id.weatherTextView);
+            gpsTextView = itemView.findViewById(R.id.gpsTextView);
             diaryImageView = itemView.findViewById(R.id.diaryImageView);
         }
     }

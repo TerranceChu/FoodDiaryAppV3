@@ -3,16 +3,20 @@ package com.project.fooddiaryv3;
 public class DiaryEntry {
     private String title;
     private String content;
-    private String date;
+    private String dateTime;
     private String imageUri;
-    private String weather;  // 添加天气信息字段
+    private String weather;
+    private double latitude;
+    private double longitude;
 
-    public DiaryEntry(String title, String content, String date, String imageUri, String weather) {
+    public DiaryEntry(String title, String content, String dateTime, String imageUri, String weather, double latitude, double longitude) {
         this.title = title;
         this.content = content;
-        this.date = date;
+        this.dateTime = dateTime;
         this.imageUri = imageUri;
-        this.weather = weather;  // 初始化天气信息字段
+        this.weather = weather;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     // Getters and setters for all fields
@@ -32,12 +36,12 @@ public class DiaryEntry {
         this.content = content;
     }
 
-    public String getDate() {
-        return date;
+    public String getDateTime() {
+        return dateTime;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setDateTime(String dateTime) {
+        this.dateTime = dateTime;
     }
 
     public String getImageUri() {
@@ -54,5 +58,21 @@ public class DiaryEntry {
 
     public void setWeather(String weather) {
         this.weather = weather;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 }
