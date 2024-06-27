@@ -1,25 +1,32 @@
 package com.project.fooddiaryv3;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TimePicker;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.Calendar;
 
 public class WriteNewDiaryActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
 
-    private EditText titleEditText, contentEditText, dateEditText, weatherEditText;
+    private EditText titleEditText, contentEditText, weatherEditText, dateTimeEditText;
     private ImageView selectedImageView;
     private Button selectImageButton, saveButton;
 
     private Uri selectedImageUri;
+    private Calendar calendar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,11 +35,20 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
 
         titleEditText = findViewById(R.id.titleEditText);
         contentEditText = findViewById(R.id.contentEditText);
-        dateEditText = findViewById(R.id.dateEditText);
-        weatherEditText = findViewById(R.id.weatherEditText); // 初始化天气信息输入框
+        weatherEditText = findViewById(R.id.weatherEditText);
+        dateTimeEditText = findViewById(R.id.dateTimeEditText);
         selectedImageView = findViewById(R.id.selectedImageView);
         selectImageButton = findViewById(R.id.selectImageButton);
         saveButton = findViewById(R.id.saveButton);
+
+        calendar = Calendar.getInstance();
+
+        dateTimeEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDateTimePicker();
+            }
+        });
 
         selectImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -48,20 +64,48 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String title = titleEditText.getText().toString();
                 String content = contentEditText.getText().toString();
-                String date = dateEditText.getText().toString();
-                String weather = weatherEditText.getText().toString(); // 获取天气信息
+                String weather = weatherEditText.getText().toString();
+                String dateTime = dateTimeEditText.getText().toString();
                 String imageUriString = selectedImageUri != null ? selectedImageUri.toString() : null;
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("title", title);
                 resultIntent.putExtra("content", content);
-                resultIntent.putExtra("date", date);
-                resultIntent.putExtra("weather", weather); // 将天气信息传递回去
+                resultIntent.putExtra("weather", weather);
+                resultIntent.putExtra("dateTime", dateTime);
                 resultIntent.putExtra("imageUri", imageUriString);
                 setResult(RESULT_OK, resultIntent);
                 finish();
             }
         });
+    }
+
+    private void showDateTimePicker() {
+        // 弹出日期选择对话框
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                calendar.set(Calendar.YEAR, year);
+                calendar.set(Calendar.MONTH, monthOfYear);
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                // 弹出时间选择对话框
+                TimePickerDialog timePickerDialog = new TimePickerDialog(WriteNewDiaryActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                    @Override
+                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                        calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                        calendar.set(Calendar.MINUTE, minute);
+
+                        // 更新日期和时间输入框
+                        dateTimeEditText.setText(String.format("%d-%d-%d %02d:%02d", calendar.get(Calendar.YEAR),
+                                calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH),
+                                calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE)));
+                    }
+                }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+                timePickerDialog.show();
+            }
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        datePickerDialog.show();
     }
 
     @Override

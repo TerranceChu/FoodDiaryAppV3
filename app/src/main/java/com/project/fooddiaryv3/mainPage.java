@@ -30,10 +30,8 @@ public class mainPage extends AppCompatActivity {
 
         // Initialize the list of diary entries
         diaryEntries = new ArrayList<>();
-        // Ensure to pass 5 arguments to the DiaryEntry constructor
-        diaryEntries.add(new DiaryEntry("Second Entry", "This is the content of the second entry.", "2024-06-27", null, "Cloudy"));
-        diaryEntries.add(new DiaryEntry("First Entry", "This is the content of the first entry.", "2024-06-26", null, "Sunny"));
-
+        diaryEntries.add(new DiaryEntry("First Entry", "This is the content of the first entry.", "2024-06-26 08:00", null, "Sunny"));
+        diaryEntries.add(new DiaryEntry("Second Entry", "This is the content of the second entry.", "2024-06-27 14:00", null, "Cloudy"));
 
         diaryAdapter = new DiaryAdapter(diaryEntries);
         recyclerView.setAdapter(diaryAdapter);
@@ -54,12 +52,11 @@ public class mainPage extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_ADD_DIARY && resultCode == RESULT_OK && data != null) {
             String title = data.getStringExtra("title");
             String content = data.getStringExtra("content");
-            String date = data.getStringExtra("date");
-            String weather = data.getStringExtra("weather"); // 获取天气信息
+            String dateTime = data.getStringExtra("dateTime");
+            String weather = data.getStringExtra("weather");
             String imageUri = data.getStringExtra("imageUri");
 
-            // Ensure to pass 5 arguments to the DiaryEntry constructor
-            DiaryEntry newEntry = new DiaryEntry(title, content, date, imageUri, weather);
+            DiaryEntry newEntry = new DiaryEntry(title, content, dateTime, imageUri, weather);
             diaryEntries.add(0, newEntry);  // 将新条目添加到列表的开头
             diaryAdapter.notifyItemInserted(0);
             recyclerView.scrollToPosition(0);  // 滚动到最新条目
