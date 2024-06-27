@@ -28,6 +28,28 @@
         android:textSize="14sp"
         android:layout_marginTop="16dp"/>
 
+    <EditText
+        android:id="@+id/weatherEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Weather"
+        android:textSize="14sp"
+        android:layout_marginTop="16dp"/> <!-- 新增天气信息输入框 -->
+
+    <ImageView
+        android:id="@+id/selectedImageView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:layout_marginTop="16dp"/>
+
+    <Button
+        android:id="@+id/selectImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Image"
+        android:layout_marginTop="16dp"/>
+
     <Button
         android:id="@+id/saveButton"
         android:layout_width="wrap_content"
