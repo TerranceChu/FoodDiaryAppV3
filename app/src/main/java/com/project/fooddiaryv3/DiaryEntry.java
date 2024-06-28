@@ -9,6 +9,11 @@ public class DiaryEntry {
     private double latitude;
     private double longitude;
 
+    // 无参数构造函数
+    public DiaryEntry() {
+    }
+
+    // 全参数构造函数
     public DiaryEntry(String title, String content, String date, String imageUri, String weather, double latitude, double longitude) {
         this.title = title;
         this.content = content;

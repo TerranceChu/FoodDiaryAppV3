@@ -2,8 +2,10 @@ package com.project.fooddiaryv3;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +25,8 @@ import java.util.List;
 
 public class mainPage extends AppCompatActivity {
 
+    private static final String TAG = "mainPage";
+
     private RecyclerView recyclerView;
     private DiaryAdapter diaryAdapter;
     private List<DiaryEntry> diaryEntries;
@@ -39,14 +43,20 @@ public class mainPage extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         diaryEntries = new ArrayList<>();
-        diaryAdapter = new DiaryAdapter(this,diaryEntries);
+        diaryAdapter = new DiaryAdapter(this, diaryEntries);
         recyclerView.setAdapter(diaryAdapter);
 
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
+
         if (currentUser != null) {
             databaseReference = FirebaseDatabase.getInstance().getReference("diaries").child(currentUser.getUid());
             loadDiaryEntries();
+        } else {
+            // 如果用户未登录，提示用户登录或导航到登录页面
+            Toast.makeText(this, "Please log in to view your diaries.", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
         }
 
         Button addDiaryButton = findViewById(R.id.addDiaryButton);
@@ -57,35 +67,30 @@ public class mainPage extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE_ADD_DIARY);
             }
         });
-
-        Button logoutButton = findViewById(R.id.logoutButton);
-        logoutButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mAuth.signOut();
-                startActivity(new Intent(mainPage.this, LoginActivity.class));
-                finish(); // Close mainPage
-            }
-        });
     }
 
     private void loadDiaryEntries() {
-        databaseReference.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                diaryEntries.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    DiaryEntry diaryEntry = snapshot.getValue(DiaryEntry.class);
-                    diaryEntries.add(0, diaryEntry);
+        if (databaseReference != null) {
+            databaseReference.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    diaryEntries.clear();
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        DiaryEntry diaryEntry = snapshot.getValue(DiaryEntry.class);
+                        Log.d(TAG, "Loaded diary entry: " + diaryEntry.getTitle());
+                        diaryEntries.add(0, diaryEntry);
+                    }
+                    diaryAdapter.notifyDataSetChanged();
                 }
-                diaryAdapter.notifyDataSetChanged();
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Handle possible errors
-            }
-        });
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    // Handle possible errors
+                    Log.e(TAG, "Failed to load data.", databaseError.toException());
+                    Toast.makeText(mainPage.this, "Failed to load data.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     @Override
@@ -101,17 +106,16 @@ public class mainPage extends AppCompatActivity {
             double longitude = data.getDoubleExtra("longitude", 0);
 
             DiaryEntry newEntry = new DiaryEntry(title, content, dateTime, imageUri, weather, latitude, longitude);
-            diaryEntries.add(0, newEntry);
+            diaryEntries.add(0, newEntry);  // Add new entry to the top of the list
             diaryAdapter.notifyItemInserted(0);
-            recyclerView.scrollToPosition(0);
+            recyclerView.scrollToPosition(0);  // Scroll to the latest entry
 
-            saveDiaryEntry(newEntry);
-        }
-    }
-
-    private void saveDiaryEntry(DiaryEntry diaryEntry) {
-        if (mAuth.getCurrentUser() != null) {
-            databaseReference.push().setValue(diaryEntry);
+            // Save to Firebase
+            if (databaseReference != null) {
+                databaseReference.push().setValue(newEntry)
+                        .addOnSuccessListener(aVoid -> Log.d(TAG, "Diary entry saved successfully"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to save diary entry", e));
+            }
         }
     }
 }
