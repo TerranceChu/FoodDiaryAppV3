@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741899982908",
+    "project_id": "login-register-firebase-8d42b",
+    "storage_bucket": "login-register-firebase-8d42b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741899982908:android:06e118edbeb74639c0cb39",
+        "android_client_info": {
+          "package_name": "com.project.fooddiaryv3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4HZK4NrM1t6ixUDXQwe6yTA1XMtPoFDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
