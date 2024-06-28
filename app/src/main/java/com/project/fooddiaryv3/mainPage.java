@@ -10,6 +10,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +26,8 @@ public class mainPage extends AppCompatActivity {
     private RecyclerView recyclerView;
     private DiaryAdapter diaryAdapter;
     private List<DiaryEntry> diaryEntries;
+    private FirebaseAuth mAuth;
+    private DatabaseReference databaseReference;
     private static final int REQUEST_CODE_ADD_DIARY = 1;
 
     @Override
@@ -28,13 +38,16 @@ public class mainPage extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Initialize the list of diary entries
         diaryEntries = new ArrayList<>();
-        diaryEntries.add(new DiaryEntry("Second Entry", "This is the content of the second entry.", "2024-06-27 14:00", null, "Cloudy", 0, 0));
-        diaryEntries.add(new DiaryEntry("First Entry", "This is the content of the first entry.", "2024-06-26 08:00", null, "Sunny", 0, 0));
-
-        diaryAdapter = new DiaryAdapter(this, diaryEntries);
+        diaryAdapter = new DiaryAdapter(this,diaryEntries);
         recyclerView.setAdapter(diaryAdapter);
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            databaseReference = FirebaseDatabase.getInstance().getReference("diaries").child(currentUser.getUid());
+            loadDiaryEntries();
+        }
 
         Button addDiaryButton = findViewById(R.id.addDiaryButton);
         addDiaryButton.setOnClickListener(new View.OnClickListener() {
@@ -42,6 +55,35 @@ public class mainPage extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(mainPage.this, WriteNewDiaryActivity.class);
                 startActivityForResult(intent, REQUEST_CODE_ADD_DIARY);
+            }
+        });
+
+        Button logoutButton = findViewById(R.id.logoutButton);
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAuth.signOut();
+                startActivity(new Intent(mainPage.this, LoginActivity.class));
+                finish(); // Close mainPage
+            }
+        });
+    }
+
+    private void loadDiaryEntries() {
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                diaryEntries.clear();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    DiaryEntry diaryEntry = snapshot.getValue(DiaryEntry.class);
+                    diaryEntries.add(0, diaryEntry);
+                }
+                diaryAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                // Handle possible errors
             }
         });
     }
@@ -59,9 +101,17 @@ public class mainPage extends AppCompatActivity {
             double longitude = data.getDoubleExtra("longitude", 0);
 
             DiaryEntry newEntry = new DiaryEntry(title, content, dateTime, imageUri, weather, latitude, longitude);
-            diaryEntries.add(0, newEntry);  // 将新条目添加到列表的开头
+            diaryEntries.add(0, newEntry);
             diaryAdapter.notifyItemInserted(0);
-            recyclerView.scrollToPosition(0);  // 滚动到最新条目
+            recyclerView.scrollToPosition(0);
+
+            saveDiaryEntry(newEntry);
+        }
+    }
+
+    private void saveDiaryEntry(DiaryEntry diaryEntry) {
+        if (mAuth.getCurrentUser() != null) {
+            databaseReference.push().setValue(diaryEntry);
         }
     }
 }

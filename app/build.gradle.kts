@@ -48,4 +48,6 @@ dependencies {
     implementation ("androidx.annotation:annotation:1.8.0")
     implementation ("com.google.android.gms:play-services-maps:18.0.2")
     implementation ("com.google.android.gms:play-services-location:21.0.1")
+    implementation ("com.google.firebase:firebase-auth:23.0.0")
+    implementation ("com.google.firebase:firebase-database:21.0.0")
 }
