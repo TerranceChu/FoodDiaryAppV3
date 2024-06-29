@@ -58,6 +58,16 @@ public class mainPage extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
+        Button logoutButton = findViewById(R.id.logoutButton);
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAuth.signOut();
+                Intent intent = new Intent(mainPage.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
 
         Button addDiaryButton = findViewById(R.id.addDiaryButton);
         addDiaryButton.setOnClickListener(new View.OnClickListener() {
