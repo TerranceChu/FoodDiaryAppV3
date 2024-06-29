@@ -13,6 +13,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHolder> {
@@ -40,7 +42,7 @@ public class DiaryAdapter extends RecyclerView.Adapter<DiaryAdapter.DiaryViewHol
         holder.weatherTextView.setText(diaryEntry.getWeather());
 
         if (diaryEntry.getImageUri() != null) {
-            holder.diaryImageView.setImageURI(Uri.parse(diaryEntry.getImageUri()));
+            Glide.with(context).load(diaryEntry.getImageUri()).into(holder.diaryImageView);
         } else {
             holder.diaryImageView.setImageResource(R.drawable.placeholder); // 占位符图片
         }

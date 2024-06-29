@@ -32,6 +32,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.Calendar;
 
@@ -48,6 +51,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
     private Calendar calendar;
     private FusedLocationProviderClient fusedLocationClient;
     private double latitude = 0.0, longitude = 0.0;  // 初始化为0.0
+    private StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +69,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
 
         calendar = Calendar.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        storageReference = FirebaseStorage.getInstance().getReference("diary_images");
 
         dateTimeEditText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,22 +90,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String title = titleEditText.getText().toString();
-                String content = contentEditText.getText().toString();
-                String weather = weatherEditText.getText().toString();
-                String dateTime = dateTimeEditText.getText().toString();
-                String imageUriString = selectedImageUri != null ? selectedImageUri.toString() : null;
-
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("title", title);
-                resultIntent.putExtra("content", content);
-                resultIntent.putExtra("weather", weather);
-                resultIntent.putExtra("dateTime", dateTime);
-                resultIntent.putExtra("imageUri", imageUriString);
-                resultIntent.putExtra("latitude", latitude);
-                resultIntent.putExtra("longitude", longitude);
-                setResult(RESULT_OK, resultIntent);
-                finish();
+                uploadImageAndSaveDiaryEntry();
             }
         });
 
@@ -195,6 +185,42 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         }
     }
 
+    private void uploadImageAndSaveDiaryEntry() {
+        if (selectedImageUri != null) {
+            StorageReference fileReference = storageReference.child(System.currentTimeMillis() + "." + getFileExtension(selectedImageUri));
+            fileReference.putFile(selectedImageUri)
+                    .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                        String imageUrl = uri.toString();
+                        saveDiaryEntry(imageUrl);
+                    }))
+                    .addOnFailureListener(e -> Toast.makeText(WriteNewDiaryActivity.this, "Failed to upload image", Toast.LENGTH_SHORT).show());
+        } else {
+            saveDiaryEntry(null);
+        }
+    }
+
+    private void saveDiaryEntry(String imageUrl) {
+        String title = titleEditText.getText().toString();
+        String content = contentEditText.getText().toString();
+        String weather = weatherEditText.getText().toString();
+        String dateTime = dateTimeEditText.getText().toString();
+
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("title", title);
+        resultIntent.putExtra("content", content);
+        resultIntent.putExtra("weather", weather);
+        resultIntent.putExtra("dateTime", dateTime);
+        resultIntent.putExtra("imageUri", imageUrl);
+        resultIntent.putExtra("latitude", latitude);
+        resultIntent.putExtra("longitude", longitude);
+        setResult(RESULT_OK, resultIntent);
+        finish();
+    }
+
+    private String getFileExtension(Uri uri) {
+        return getContentResolver().getType(uri).split("/")[1];
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -212,3 +238,4 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         }
     }
 }
+
