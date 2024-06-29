@@ -3,11 +3,14 @@ package com.project.fooddiaryv3;
 import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -36,16 +39,19 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Calendar;
 
 public class WriteNewDiaryActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
     private static final int REQUEST_LOCATION_PERMISSION = 2;
+    private static final int REQUEST_IMAGE_CAPTURE = 3;
 
     private EditText titleEditText, contentEditText, weatherEditText, dateTimeEditText;
     private ImageView selectedImageView;
-    private Button selectImageButton, saveButton, recordLocationButton;
+    private Button selectImageButton, saveButton, recordLocationButton, takePhotoButton;
 
     private Uri selectedImageUri;
     private Calendar calendar;
@@ -66,6 +72,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         selectImageButton = findViewById(R.id.selectImageButton);
         saveButton = findViewById(R.id.saveButton);
         recordLocationButton = findViewById(R.id.recordLocationButton);
+        takePhotoButton = findViewById(R.id.takePhotoButton);
 
         calendar = Calendar.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -81,9 +88,18 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         selectImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                startActivityForResult(intent, PICK_IMAGE_REQUEST);
+                openImagePicker();
+            }
+        });
+
+        takePhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ContextCompat.checkSelfPermission(WriteNewDiaryActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(WriteNewDiaryActivity.this, new String[]{Manifest.permission.CAMERA}, REQUEST_IMAGE_CAPTURE);
+                } else {
+                    openCamera();
+                }
             }
         });
 
@@ -132,6 +148,86 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
             }
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
         datePickerDialog.show();
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+    }
+
+    private void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+    }
+
+    private void uploadImageAndSaveDiaryEntry() {
+        if (selectedImageUri != null) {
+            StorageReference fileReference = storageReference.child(System.currentTimeMillis() + "." + getFileExtension(selectedImageUri));
+            fileReference.putFile(selectedImageUri)
+                    .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                        String imageUrl = uri.toString();
+                        saveDiaryEntry(imageUrl);
+                    }))
+                    .addOnFailureListener(e -> Toast.makeText(WriteNewDiaryActivity.this, "Failed to upload image", Toast.LENGTH_SHORT).show());
+        } else {
+            saveDiaryEntry(null);
+        }
+    }
+
+    private void saveDiaryEntry(String imageUrl) {
+        String title = titleEditText.getText().toString();
+        String content = contentEditText.getText().toString();
+        String weather = weatherEditText.getText().toString();
+        String dateTime = dateTimeEditText.getText().toString();
+
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("title", title);
+        resultIntent.putExtra("content", content);
+        resultIntent.putExtra("weather", weather);
+        resultIntent.putExtra("dateTime", dateTime);
+        resultIntent.putExtra("imageUri", imageUrl);
+        resultIntent.putExtra("latitude", latitude);
+        resultIntent.putExtra("longitude", longitude);
+        setResult(RESULT_OK, resultIntent);
+        finish();
+    }
+
+    private String getFileExtension(Uri uri) {
+        return getContentResolver().getType(uri).split("/")[1];
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
+                selectedImageUri = data.getData();
+                selectedImageView.setImageURI(selectedImageUri);
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE && data != null) {
+                Bitmap imageBitmap = (Bitmap) data.getExtras().get("data");
+                selectedImageUri = getImageUri(imageBitmap);
+                selectedImageView.setImageURI(selectedImageUri);
+            }
+        }
+    }
+
+    private Uri getImageUri(Bitmap bitmap) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(getContentResolver(), bitmap, "Title", null);
+        return Uri.parse(path);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_LOCATION_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openMap();
+        }
+        if (requestCode == REQUEST_IMAGE_CAPTURE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera();
+        }
     }
 
     private void openMap() {
@@ -184,58 +280,4 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-
-    private void uploadImageAndSaveDiaryEntry() {
-        if (selectedImageUri != null) {
-            StorageReference fileReference = storageReference.child(System.currentTimeMillis() + "." + getFileExtension(selectedImageUri));
-            fileReference.putFile(selectedImageUri)
-                    .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
-                        String imageUrl = uri.toString();
-                        saveDiaryEntry(imageUrl);
-                    }))
-                    .addOnFailureListener(e -> Toast.makeText(WriteNewDiaryActivity.this, "Failed to upload image", Toast.LENGTH_SHORT).show());
-        } else {
-            saveDiaryEntry(null);
-        }
-    }
-
-    private void saveDiaryEntry(String imageUrl) {
-        String title = titleEditText.getText().toString();
-        String content = contentEditText.getText().toString();
-        String weather = weatherEditText.getText().toString();
-        String dateTime = dateTimeEditText.getText().toString();
-
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("title", title);
-        resultIntent.putExtra("content", content);
-        resultIntent.putExtra("weather", weather);
-        resultIntent.putExtra("dateTime", dateTime);
-        resultIntent.putExtra("imageUri", imageUrl);
-        resultIntent.putExtra("latitude", latitude);
-        resultIntent.putExtra("longitude", longitude);
-        setResult(RESULT_OK, resultIntent);
-        finish();
-    }
-
-    private String getFileExtension(Uri uri) {
-        return getContentResolver().getType(uri).split("/")[1];
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            selectedImageUri = data.getData();
-            selectedImageView.setImageURI(selectedImageUri);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_LOCATION_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            openMap();
-        }
-    }
 }
-

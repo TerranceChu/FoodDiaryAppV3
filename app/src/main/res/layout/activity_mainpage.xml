@@ -11,19 +11,19 @@
         android:layout_height="match_parent"/>
 
     <Button
-        android:id="@+id/logoutButton"
+        android:id="@+id/addDiaryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Logout"
+        android:text="Add Diary"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"/>
 
     <Button
-        android:id="@+id/addDiaryButton"
+        android:id="@+id/logoutButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Diary"
+        android:text="Logout"
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"/>
 
