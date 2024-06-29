@@ -3,7 +3,8 @@ package com.project.fooddiaryv3;
 import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.content.ContentValues;
+import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -11,7 +12,9 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -21,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -41,6 +45,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class WriteNewDiaryActivity extends AppCompatActivity {
@@ -48,10 +53,11 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
     private static final int REQUEST_LOCATION_PERMISSION = 2;
     private static final int REQUEST_IMAGE_CAPTURE = 3;
+    private static final int REQUEST_CODE_SPEECH_INPUT = 4;
 
     private EditText titleEditText, contentEditText, weatherEditText, dateTimeEditText;
     private ImageView selectedImageView;
-    private Button selectImageButton, saveButton, recordLocationButton, takePhotoButton;
+    private Button selectImageButton, saveButton, recordLocationButton, takePhotoButton, voiceInputButton;
 
     private Uri selectedImageUri;
     private Calendar calendar;
@@ -73,6 +79,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.saveButton);
         recordLocationButton = findViewById(R.id.recordLocationButton);
         takePhotoButton = findViewById(R.id.takePhotoButton);
+        voiceInputButton = findViewById(R.id.voiceInputButton);
 
         calendar = Calendar.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -100,6 +107,13 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 } else {
                     openCamera();
                 }
+            }
+        });
+
+        voiceInputButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startVoiceInput();
             }
         });
 
@@ -161,6 +175,17 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
     }
 
+    private void startVoiceInput() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Speech recognition not supported on this device.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void uploadImageAndSaveDiaryEntry() {
         if (selectedImageUri != null) {
             StorageReference fileReference = storageReference.child(System.currentTimeMillis() + "." + getFileExtension(selectedImageUri));
@@ -208,6 +233,12 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 Bitmap imageBitmap = (Bitmap) data.getExtras().get("data");
                 selectedImageUri = getImageUri(imageBitmap);
                 selectedImageView.setImageURI(selectedImageUri);
+            } else if (requestCode == REQUEST_CODE_SPEECH_INPUT && data != null) {
+                ArrayList<String> result = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                if (result != null && !result.isEmpty()) {
+                    String spokenText = result.get(0);
+                    showInsertTextDialog(spokenText);
+                }
             }
         }
     }
@@ -228,6 +259,36 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             openCamera();
         }
+    }
+
+    private void showInsertTextDialog(String spokenText) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Insert Text");
+        builder.setMessage("Where would you like to insert the text?");
+
+        builder.setNeutralButton("Weather", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String currentText = weatherEditText.getText().toString();
+                weatherEditText.setText(currentText + " " + spokenText);
+            }
+        });
+
+        builder.setNegativeButton("Content", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String currentText = contentEditText.getText().toString();
+                contentEditText.setText(currentText + " " + spokenText);
+            }
+        });
+        builder.setPositiveButton("Title", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String currentText = titleEditText.getText().toString();
+                titleEditText.setText(currentText + " " + spokenText);
+            }
+        });
+        builder.show();
     }
 
     private void openMap() {
