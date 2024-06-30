@@ -48,12 +48,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class WriteNewDiaryActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
     private static final int REQUEST_LOCATION_PERMISSION = 2;
     private static final int REQUEST_IMAGE_CAPTURE = 3;
     private static final int REQUEST_CODE_SPEECH_INPUT = 4;
+    private static final String API_KEY = "1a5cd43a49cce9e045e9972afcb725a6";
 
     private EditText titleEditText, contentEditText, weatherEditText, dateTimeEditText;
     private ImageView selectedImageView;
@@ -62,8 +69,9 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private Calendar calendar;
     private FusedLocationProviderClient fusedLocationClient;
-    private double latitude = 0.0, longitude = 0.0;  // 初始化为0.0
+    private double latitude = 0.0, longitude = 0.0;  // intit to 0.0
     private StorageReference storageReference;
+    private WeatherApi weatherApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +92,13 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         calendar = Calendar.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         storageReference = FirebaseStorage.getInstance().getReference("diary_images");
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.openweathermap.org/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        weatherApi = retrofit.create(WeatherApi.class);
 
         dateTimeEditText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -265,15 +280,13 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Insert Text");
         builder.setMessage("Where would you like to insert the text?");
-
-        builder.setNeutralButton("Weather", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Title", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String currentText = weatherEditText.getText().toString();
-                weatherEditText.setText(currentText + " " + spokenText);
+                String currentText = titleEditText.getText().toString();
+                titleEditText.setText(currentText + " " + spokenText);
             }
         });
-
         builder.setNegativeButton("Content", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -281,11 +294,11 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 contentEditText.setText(currentText + " " + spokenText);
             }
         });
-        builder.setPositiveButton("Title", new DialogInterface.OnClickListener() {
+        builder.setNeutralButton("Weather", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String currentText = titleEditText.getText().toString();
-                titleEditText.setText(currentText + " " + spokenText);
+                String currentText = weatherEditText.getText().toString();
+                weatherEditText.setText(currentText + " " + spokenText);
             }
         });
         builder.show();
@@ -332,6 +345,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                                                 Toast.makeText(WriteNewDiaryActivity.this, "Location recorded: " + latitude + ", " + longitude, Toast.LENGTH_SHORT).show();
                                             }
                                         });
+                                        fetchWeather(location.getLatitude(), location.getLongitude());
                                     }
                                 }
                             });
@@ -340,5 +354,27 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
         } catch (SecurityException e) {
             e.printStackTrace();
         }
+    }
+
+    private void fetchWeather(double latitude, double longitude) {
+        Call<WeatherResponse> call = weatherApi.getCurrentWeather(latitude, longitude, API_KEY, "metric");
+        call.enqueue(new Callback<WeatherResponse>() {
+            @Override
+            public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    WeatherResponse weatherResponse = response.body();
+                    String weatherDescription = weatherResponse.getWeather()[0].getDescription();
+                    float temperature = weatherResponse.getMain().getTemp();
+                    weatherEditText.setText(weatherDescription + ", " + temperature + "°C");
+                } else {
+                    Toast.makeText(WriteNewDiaryActivity.this, "Failed to fetch weather data", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WeatherResponse> call, Throwable t) {
+                Toast.makeText(WriteNewDiaryActivity.this, "Failed to fetch weather data", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
