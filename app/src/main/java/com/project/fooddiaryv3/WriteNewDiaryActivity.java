@@ -152,7 +152,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
     }
 
     private void showDateTimePicker() {
-        // 弹出日期选择对话框
+        // show showDateTimePicker
         DatePickerDialog datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
@@ -160,7 +160,7 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                 calendar.set(Calendar.MONTH, monthOfYear);
                 calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
-                // 弹出时间选择对话框
+                // show TimePickerDialog
                 TimePickerDialog timePickerDialog = new TimePickerDialog(WriteNewDiaryActivity.this, new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
@@ -329,12 +329,10 @@ public class WriteNewDiaryActivity extends AppCompatActivity {
                                         googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
                                             @Override
                                             public void onMarkerDragStart(Marker marker) {
-                                                // Do nothing
                                             }
 
                                             @Override
                                             public void onMarkerDrag(Marker marker) {
-                                                // Do nothing
                                             }
 
                                             @Override

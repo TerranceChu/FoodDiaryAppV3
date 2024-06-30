@@ -53,7 +53,7 @@ public class mainPage extends AppCompatActivity {
             databaseReference = FirebaseDatabase.getInstance().getReference("diaries").child(currentUser.getUid());
             loadDiaryEntries();
         } else {
-            // 如果用户未登录，提示用户登录或导航到登录页面
+            // if user no login ,will go to login page
             Toast.makeText(this, "Please log in to view your diaries.", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
             finish();

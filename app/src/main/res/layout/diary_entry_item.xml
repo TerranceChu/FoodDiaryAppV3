@@ -44,7 +44,7 @@
         android:text="Weather"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
-        android:textColor="@android:color/holo_blue_dark"/> <!-- 天气信息显示 -->
+        android:textColor="@android:color/holo_blue_dark"/> <!-- weather information show -->
 
     <Button
         android:id="@+id/openMapButton"
@@ -58,7 +58,7 @@
         android:id="@+id/noLocationTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="没有记录GPS"
+        android:text="no record GPS"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
         android:visibility="gone"/>

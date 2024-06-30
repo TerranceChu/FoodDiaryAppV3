@@ -9,7 +9,6 @@ public class DiaryEntry {
     private double latitude;
     private double longitude;
 
-    // 无参数构造函数
     public DiaryEntry() {
     }
 
