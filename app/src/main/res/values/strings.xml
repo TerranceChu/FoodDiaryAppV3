@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DiaryApp</string>
+    <string name="app_name">FoodDiaryApp</string>
     <string name="login">Login</string>
     <string name="password">password</string>
     <string name="email">email</string>
